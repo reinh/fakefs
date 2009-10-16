@@ -29,6 +29,21 @@ module FakeFS
 
     DEFAULT_UMASK = 022
 
+    S_IRWXU = 00700
+    S_IRUSR = 00400
+    S_IWUSR = 00200
+    S_IXUSR = 00100
+
+    S_IRWXG = 00070
+    S_IRGRP = 00040
+    S_IWGRP = 00020
+    S_IXGRP = 00010
+
+    S_IRWXO = 00007
+    S_IROTH = 00004
+    S_IWOTH = 00002
+    S_IXOTH = 00001
+
     def self.extname(path)
       RealFile.extname(path)
     end
@@ -43,9 +58,6 @@ module FakeFS
 
     class << self
       alias_method :exists?, :exist?
-
-      # Assuming that everyone can read files
-      alias_method :readable?, :exist?
     end
 
     def self.mtime(path)
@@ -207,11 +219,22 @@ module FakeFS
       return old_umask.to_int
     end
 
+    def self.readable?(file)
+      return false unless File.exists?(file)
+      File.new(file).readable?
+    end
+
+    def self.writable?(file)
+      return false unless File.exists?(file)
+      File.new(file).writable?
+    end
+
     attr_reader :path
 
     def initialize(path, mode = READ_ONLY, perm = nil)
       @path = path
       @mode = mode
+      @perm = perm
       @file = FileSystem.find(path)
       @open = true
       @stream = StringIO.new(@file.content) if @file
@@ -237,6 +260,18 @@ module FakeFS
 
     def exists?
       @file
+    end
+
+    def readable?
+      perm & S_IRUSR != 0 ||
+      perm & S_IRGRP != 0 ||
+      perm & S_IROTH != 0
+    end
+
+    def writable?
+      perm & S_IWUSR != 0 ||
+      perm & S_IWGRP != 0 ||
+      perm & S_IWOTH != 0
     end
 
     def puts(*content)
@@ -292,12 +327,16 @@ module FakeFS
 
     def create_missing_file
       if !File.exists?(@path)
-        @file = FileSystem.add(path, FakeFile.new)
+        @file = FileSystem.add(path, FakeFile.new(nil, nil, :perm => @perm))
       end
     end
 
     def truncate_file
       @file.content = ""
+    end
+
+    def perm
+      @perm ||= @file.perm
     end
   end
 end

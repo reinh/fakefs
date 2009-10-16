@@ -21,11 +21,12 @@ module FakeFS
       end
     end
 
-    def initialize(name = nil, parent = nil)
+    def initialize(name = nil, parent = nil, stat={})
       @name   = name
       @parent = parent
       @inode  = Inode.new(self)
       @mtime  = Time.now
+      @stat   = stat
     end
 
     attr_accessor :inode
@@ -36,6 +37,10 @@ module FakeFS
 
     def content=(str)
       @inode.content = str
+    end
+
+    def perm
+      @stat[:perm]
     end
 
     def links
