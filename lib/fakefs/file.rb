@@ -27,6 +27,8 @@ module FakeFS
       READ_WRITE_TRUNCATE
     ]
 
+    DEFAULT_UMASK = 022
+
     def self.extname(path)
       RealFile.extname(path)
     end
@@ -200,6 +202,12 @@ module FakeFS
       def nlink
         FileSystem.find(@file).links.size
       end
+    end
+
+    def self.umask(int=nil)
+      old_umask = @umask ||= DEFAULT_UMASK
+      @umask = int.to_int if int
+      return old_umask.to_int
     end
 
     attr_reader :path
