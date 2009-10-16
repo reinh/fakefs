@@ -156,22 +156,19 @@ module FakeFS
       0
     end
 
-    def self.delete(file_name, *additional_file_names)
-      if !exists?(file_name)
-        raise Errno::ENOENT, "No such file or directory - #{file_name}"
+    def self.unlink(*paths)
+      paths.each do |path|
+        raise TypeError, "can't convert #{path.class} into String" unless path.respond_to?(:to_str)
+        path = path.to_str
+        raise Errno::ENOENT, "No such file or directory - #{path}" unless exists?(path)
+        FileUtils.rm(path)
       end
 
-      FileUtils.rm(file_name)
-
-      additional_file_names.each do |file_name|
-        FileUtils.rm(file_name)
-      end
-
-      additional_file_names.size + 1
+      paths.size
     end
 
     class << self
-      alias_method :unlink, :delete
+      alias_method :delete, :unlink
     end
 
     def self.symlink(source, dest)
