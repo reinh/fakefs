@@ -229,6 +229,11 @@ module FakeFS
       File.new(file).writable?
     end
 
+    def self.executable?(file)
+      return false unless File.exists?(file)
+      File.new(file).executable?
+    end
+
     attr_reader :path
 
     def initialize(path, mode = READ_ONLY, perm = nil)
@@ -272,6 +277,12 @@ module FakeFS
       perm & S_IWUSR != 0 ||
       perm & S_IWGRP != 0 ||
       perm & S_IWOTH != 0
+    end
+
+    def executable?
+      perm & S_IXUSR != 0 ||
+      perm & S_IXGRP != 0 ||
+      perm & S_IXOTH != 0
     end
 
     def puts(*content)
